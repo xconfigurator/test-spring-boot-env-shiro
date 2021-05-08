@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+    xmlns:shiro="http://www.thymeleaf.org/thymeleaf-extras-shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+</head>
+<body>
+    <h1>测试</h1>
+    <h2 th:text="${msg}"></h2>
+    <!-- 不加Shiro标签控制 -->
+    <ul>
+        <li><a th:href="${'/main'}">main</a></li>
+        <li><a th:href="${'/manager'}">manager</a></li>
+        <li><a th:href="${'/admin'}">admin</a></li>
+        <li><a th:href="${'/logout'}">注销</a></li>
+    </ul>
+    <!-- 使用Shiro标签控制 -->
+    <ul>
+        <li><a th:href="${'/main'}">main</a></li>
+        <li shiro:hasPermission="managerxxx"><a th:href="${'/manager'}">manager</a></li>
+        <li shiro:hasRole="admin"><a th:href="${'/admin'}">admin</a></li>
+        <li><a th:href="${'/logout'}">注销</a></li>
+    </ul>
+</body>
+</html>
