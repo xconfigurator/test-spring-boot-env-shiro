@@ -1,13 +1,21 @@
 package liuyang.testspringbootenvshiro.modules.security.shiro.config;
 
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
+import liuyang.testspringbootenvshiro.modules.security.shiro.dao.mbp.FilterChainDefinitionMapBuilder;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.UserRealm;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo.User;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo.UserHelloRealm;
+import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo02.UserHelloRealm02;
 import liuyang.testspringbootenvshiro.modules.security.shiro.session.RedisSessionManager;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.authc.pam.AllSuccessfulStrategy;
+import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
+import org.apache.shiro.authc.pam.FirstSuccessfulStrategy;
+import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.shiro.session.mgt.SessionManager;
+import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -15,12 +23,17 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +52,9 @@ import java.util.Map;
  */
 @Configuration
 public class ShiroConfig {
+
+    @Autowired
+    FilterChainDefinitionMapBuilder filterChainDefinitionMapBuilder;
 
     /*
     在Web程序中，Shiro进行权限控制是通过一组过滤器完成的。
@@ -67,13 +83,20 @@ public class ShiroConfig {
          * ssl: 必须是安全的URL请求，协议必须是HTTPS。
          */
         // Map<String, String> filterChainDefinitionMap = new HashMap<>();
-        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
+        /*
+        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();// 问：为啥用LinkedHashMap? 一个回答：在用xml配置的时候，框架默认就是用的LinkedHashMap。又答：LinkedHashMap可以保证顺序。
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         // 配置规则
+        // 如何将这一部分放入数据库：https://www.bilibili.com/video/BV1YW411M7S3?p=22
+        // 答：写个Service，返回一个LinkedHashMap对象，赋给shiroFilterFactoryBean即可。
+        // 视频演示了一种实例工厂方法的办法。可以参考。
         filterChainDefinitionMap.put("/", "anon");
         filterChainDefinitionMap.put("/main", "authc");             // 访问/main必须登录
         filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限
         filterChainDefinitionMap.put("/admin", "roles[admin]");     // 访问/admin必须具有admin角色
+        filterChainDefinitionMap.put("/**", "authc");               // 这个放在最后
+        */
+        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMapBuilder.build());
 
 
         // 若使用JWT 则进行如下配置
@@ -86,17 +109,42 @@ public class ShiroConfig {
     }
 
     // DefaultWebSecurityManager
+    // 1. 配Realm 以及 认证、授权的策略
+    // 2. 配缓存
+    // 3. 配会话管理
     @Bean
     public DefaultWebSecurityManager defaultWebSecurityManager(@Qualifier("userRealm") UserRealm userRealm
-        , @Qualifier("iniRealm") IniRealm iniRealm
-        , @Qualifier("redisSessionManager")SessionManager redisSessionManager) {
+            , @Qualifier("iniRealm") IniRealm iniRealm
+            , @Qualifier("redisCacheManager") RedisCacheManager redisCacheManager
+            , @Qualifier("redisSessionManager")SessionManager redisSessionManager
+            , @Qualifier("modularRealmAuthenticator") ModularRealmAuthenticator modularRealmAuthenticator) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
+
+        // 1. 配置Realm或者Authenticator（多Realm场景）
+        // 1.1 单Realm
         // defaultWebSecurityManager.setRealm(userRealm);
         defaultWebSecurityManager.setRealm(iniRealm);// 测试使用, 从shiro_user.ini文件中读取
+        // 1.2.1 多Realm 将Realm配置给Authenticator
+        // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator);
+        // 1.2.2 多Realm 将Realm配置给SecurityManager的Realms (推荐)
+        /*
+        List<Realm> realms = new ArrayList<>();
+        realms.add(userHelloRealm);
+        realms.add(userHelloRealm02);
+        defaultWebSecurityManager.setRealms(realms);
+        defaultWebSecurityManager.setAuthenticator(new ModularRealmAuthenticator());// 使用默认认证策略 AtLeastOneSuccessfulStrategy
+        // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator); //订制策略
+        */
 
-        // 配置会话管理器
+        // 2. 配置缓存管理器（？？不手动配置会生效么？ Redis的）
+        // 默认情况缓存使用的是：？？
+        defaultWebSecurityManager.setCacheManager(redisCacheManager);
+
+        // 3. 配置会话管理器
         // 默认情况是使用的：ServletContainerSessionManager。如果使用Redis存储session，则应做配置
         defaultWebSecurityManager.setSessionManager(redisSessionManager);
+
+        //
 
         return defaultWebSecurityManager;
     }
@@ -116,6 +164,7 @@ public class ShiroConfig {
     public UserHelloRealm userHelloRealm() {
         UserHelloRealm userHelloRealm = new UserHelloRealm();
 
+        // 散列规则
         // 这里指定的hash规则应该与注册时使用的hash规则一致
         // 体现在 SimpleHash(String algorithmName, Object source, Object salt, int hashIterations) 中的algorithmName和hashIterations
         HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
@@ -127,6 +176,37 @@ public class ShiroConfig {
         return userHelloRealm;
     }
 
+    @Bean
+    public UserHelloRealm02 userHelloRealm02() {
+        UserHelloRealm02 userHelloRealm02 = new UserHelloRealm02();
+
+        // 散列规则 TODO
+
+
+        return userHelloRealm02;
+    }
+
+    // 如果涉及到多个Realm认证(貌似Shiro还支持多个Realm授权)
+    // Demo 推荐配置方式参见public DefaultWebSecurityManager defaultWebSecurityManager(...)
+    @Bean
+    public ModularRealmAuthenticator modularRealmAuthenticator(UserHelloRealm userHelloRealm, UserHelloRealm userHelloRealm02) {
+        ModularRealmAuthenticator modularRealmAuthenticator = new ModularRealmAuthenticator();
+
+        // 1. Realms （Realms推荐配置在SecurityManager中的写法，整个这个@Bean都不需要！）
+        List<Realm> realms = new ArrayList<>();
+        realms.add(userHelloRealm);
+        realms.add(userHelloRealm02);
+
+        // 2. 认证策略 AuthenticationStrategy
+        // ModularRealmAuthenticator默认使用AtLeastOneSuccessfulStrategy
+        // modularRealmAuthenticator.setAuthenticationStrategy(new AtLeastOneSuccessfulStrategy()); // default
+        modularRealmAuthenticator.setAuthenticationStrategy(new AllSuccessfulStrategy());
+        // modularRealmAuthenticator.setAuthenticationStrategy(new FirstSuccessfulStrategy());
+
+        modularRealmAuthenticator.setRealms(realms);
+        return modularRealmAuthenticator;
+    }
+
     // 整合thymeleaf-extras-shiro
     @Bean
     public ShiroDialect getShiroDialect() {
@@ -135,6 +215,23 @@ public class ShiroConfig {
 
     // //////////////////////////////////////////////////////////////////////////
     // 配置支持shiro注解
+    // pdt中配了这个，但是renren-security中没有
+    // 不过好像这个默认值就是true。？？在IntelliJ IDEA中如何查看某一个类的属性的默认值？或者说运行时的值？
+    /*
+    @Bean
+    @DependsOn("lifecycleBeanPostProcessor")
+    public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator() {
+        DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator = new DefaultAdvisorAutoProxyCreator();
+        defaultAdvisorAutoProxyCreator.setProxyTargetClass(true);
+        return defaultAdvisorAutoProxyCreator;
+    }
+     */
+
+    @Bean("lifecycleBeanPostProcessor")
+    public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
+        return new LifecycleBeanPostProcessor();
+    }
+
     @Bean
     public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(DefaultWebSecurityManager defaultWebSecurityManager) {
         AuthorizationAttributeSourceAdvisor advisor = new AuthorizationAttributeSourceAdvisor();

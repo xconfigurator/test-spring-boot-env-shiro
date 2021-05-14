@@ -22,12 +22,13 @@ import java.util.Set;
 public class UserHelloRealm extends AuthorizingRealm {
 
     // 授权
+    // Realm实现(时间)：https://www.bilibili.com/video/BV1YW411M7S3?p=19
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
         log.info("执行了授权 doGetAuthorizationInfo(PrincipalCollection principals)");
         // 第三个人::黑马
         // 1. 获取登录相关信息（从认证方法保存的安全数据中获取）n
-        User user = (User) principals.getPrimaryPrincipal();
+        User user = (User) principals.getPrimaryPrincipal();// 在多Realm时，拿到的principal是根ShiroConfig.java中配置的Realm顺序有关的。
         // 2. 根据id或者名称去查询用户(from principals)
         // 3. 查询用户的角色和权限(from principals)
         Set<String> permissions = user.getPermissions();
