@@ -33,7 +33,8 @@ public class LoginController {
         }
         // 20210508 add end
 
-        UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+        // AuthenticationToken
+        UsernamePasswordToken token = new UsernamePasswordToken(username, password);// password字段
 
         try {
             subject.login(token);

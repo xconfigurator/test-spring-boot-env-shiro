@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules.security.shiro.controller;
+package liuyang.testspringbootenvshiro.modules.hello.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,40 +1,38 @@
 package liuyang.testspringbootenvshiro.modules.security.shiro.config;
 
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
-import liuyang.testspringbootenvshiro.modules.security.shiro.dao.mbp.FilterChainDefinitionMapBuilder;
+import liuyang.testspringbootenvshiro.modules.security.shiro.service.FilterChainDefinitionMapBuilder;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.UserRealm;
-import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo.User;
-import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo.UserHelloRealm;
+import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo01.UserHelloRealm01;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo02.UserHelloRealm02;
 import liuyang.testspringbootenvshiro.modules.security.shiro.session.RedisSessionManager;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.AllSuccessfulStrategy;
-import org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy;
-import org.apache.shiro.authc.pam.FirstSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
+import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
+import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
+import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
-import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author liuyang
@@ -44,6 +42,12 @@ import java.util.Map;
  * 1. Realm
  * 2. DefaultWebSecurityManager
  * 3. ShiroFilterFactoryBean
+ *
+ * 注册Redis相关四大件
+ * 1. RedisManager
+ * 2. Shiro Session Manager -> RedisSessionManager
+ * 3. Shiro Session DAO -> RedisSessionDAO
+ * 4. Shiro Cache Manager -> RedisCacheManager
  *
  * 联想Shiro核心组件：
  * 1. Subject <-- the current 'user'
@@ -63,8 +67,10 @@ public class ShiroConfig {
     @Bean
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("defaultWebSecurityManager") DefaultWebSecurityManager defaultWebSecurityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
+        // //////////////////////////////////////////////////////////////////////////////
         shiroFilterFactoryBean.setSecurityManager(defaultWebSecurityManager);
 
+        // //////////////////////////////////////////////////////////////////////////////
         // 编写认证授权规则（过滤器集合）
         // 有两种方式支持鉴权
         // 1.配置过滤器。
@@ -92,20 +98,30 @@ public class ShiroConfig {
         // 视频演示了一种实例工厂方法的办法。可以参考。
         filterChainDefinitionMap.put("/", "anon");
         filterChainDefinitionMap.put("/main", "authc");             // 访问/main必须登录
-        filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限
+        filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限 其他例子：perms[user:add]
         filterChainDefinitionMap.put("/admin", "roles[admin]");     // 访问/admin必须具有admin角色
         filterChainDefinitionMap.put("/**", "authc");               // 这个放在最后
         */
-        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMapBuilder.build());
+        //shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMapBuilder.build());// URL 拦截器参考”另外的方法“
 
-
-        // 若使用JWT 则进行如下配置
-
-        // 若是使用页面方式 则进行如下配置
+        // //////////////////////////////////////////////////////////////////////////////
+        // 未认证配置 若是使用页面方式 则进行如下配置
         shiroFilterFactoryBean.setLoginUrl("/login"); // 默认会找/login.jsp
         shiroFilterFactoryBean.setUnauthorizedUrl("/401"); // 设置未授权的页面
 
+        // 若使用JWT 则进行如下配置
+
+
         return shiroFilterFactoryBean;
+    }
+
+    // 另外的方法
+    @Bean
+    public DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition() {
+        DefaultShiroFilterChainDefinition definition = new DefaultShiroFilterChainDefinition();
+        //definition.addPathDefinition("/login", "anon");
+        definition.addPathDefinitions(filterChainDefinitionMapBuilder.build());
+        return definition;
     }
 
     // DefaultWebSecurityManager
@@ -113,7 +129,8 @@ public class ShiroConfig {
     // 2. 配缓存
     // 3. 配会话管理
     @Bean
-    public DefaultWebSecurityManager defaultWebSecurityManager(@Qualifier("userRealm") UserRealm userRealm
+    public DefaultWebSecurityManager defaultWebSecurityManager(
+            @Qualifier("userRealm") UserRealm userRealm
             , @Qualifier("iniRealm") IniRealm iniRealm
             , @Qualifier("redisCacheManager") RedisCacheManager redisCacheManager
             , @Qualifier("redisSessionManager")SessionManager redisSessionManager
@@ -136,15 +153,24 @@ public class ShiroConfig {
         // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator); //订制策略
         */
 
-        // 2. 配置缓存管理器（？？不手动配置会生效么？ Redis的）
-        // 默认情况缓存使用的是：？？
-        defaultWebSecurityManager.setCacheManager(redisCacheManager);
+        // 2. 配置会话管理器
+        // 2.1 关闭默认缓存
+        // 关闭shiro自带的web的session。详见文档
+        // http://shiro.apache.org/session-management.html#SessionManagement-StatelessApplications
+        // 如果不关闭，则会使用Web Session。
+        DefaultSubjectDAO subjectDAO = new DefaultSubjectDAO();
+        DefaultSessionStorageEvaluator defaultSessionStorageEvaluator = new DefaultSessionStorageEvaluator();
+        defaultSessionStorageEvaluator.setSessionStorageEnabled(false);
+        subjectDAO.setSessionStorageEvaluator(defaultSessionStorageEvaluator);
+        defaultWebSecurityManager.setSubjectDAO(subjectDAO);
 
-        // 3. 配置会话管理器
+        // 2.2 使用redisSessionManager
         // 默认情况是使用的：ServletContainerSessionManager。如果使用Redis存储session，则应做配置
         defaultWebSecurityManager.setSessionManager(redisSessionManager);
 
-        //
+        // 3. 配置缓存管理器（？？不手动配置会生效么？ Redis的）
+        // 默认情况缓存使用的是：？？
+        defaultWebSecurityManager.setCacheManager(redisCacheManager);
 
         return defaultWebSecurityManager;
     }
@@ -161,8 +187,8 @@ public class ShiroConfig {
     }
 
     @Bean
-    public UserHelloRealm userHelloRealm() {
-        UserHelloRealm userHelloRealm = new UserHelloRealm();
+    public UserHelloRealm01 userHelloRealm() {
+        UserHelloRealm01 userHelloRealm01 = new UserHelloRealm01();
 
         // 散列规则
         // 这里指定的hash规则应该与注册时使用的hash规则一致
@@ -171,9 +197,9 @@ public class ShiroConfig {
         hashedCredentialsMatcher.setHashAlgorithmName("MD5");// algorithmName
         // hashedCredentialsMatcher.setHashIterations(5);// hashIterations 默认-1
 
-        userHelloRealm.setCredentialsMatcher(hashedCredentialsMatcher);
+        userHelloRealm01.setCredentialsMatcher(hashedCredentialsMatcher);
 
-        return userHelloRealm;
+        return userHelloRealm01;
     }
 
     @Bean
@@ -189,12 +215,12 @@ public class ShiroConfig {
     // 如果涉及到多个Realm认证(貌似Shiro还支持多个Realm授权)
     // Demo 推荐配置方式参见public DefaultWebSecurityManager defaultWebSecurityManager(...)
     @Bean
-    public ModularRealmAuthenticator modularRealmAuthenticator(UserHelloRealm userHelloRealm, UserHelloRealm userHelloRealm02) {
+    public ModularRealmAuthenticator modularRealmAuthenticator(UserHelloRealm01 userHelloRealm01, UserHelloRealm01 userHelloRealm02) {
         ModularRealmAuthenticator modularRealmAuthenticator = new ModularRealmAuthenticator();
 
         // 1. Realms （Realms推荐配置在SecurityManager中的写法，整个这个@Bean都不需要！）
         List<Realm> realms = new ArrayList<>();
-        realms.add(userHelloRealm);
+        realms.add(userHelloRealm01);
         realms.add(userHelloRealm02);
 
         // 2. 认证策略 AuthenticationStrategy
@@ -207,7 +233,9 @@ public class ShiroConfig {
         return modularRealmAuthenticator;
     }
 
+    // //////////////////////////////////////////////////////////////////////////
     // 整合thymeleaf-extras-shiro
+    // 使用方法参考：https://blog.csdn.net/q15102780705/article/details/107445247
     @Bean
     public ShiroDialect getShiroDialect() {
         return new ShiroDialect();
@@ -254,6 +282,14 @@ public class ShiroConfig {
     @Value("${spring.redis.port}")
     private int REDIS_PORT;
 
+    private String REDIS_CACHE_KEY = "shiro:cache";
+
+    private String REDIS_SESSION_KEY = "shiro:session";
+
+    private String COOKIE_NAME = "custom.name"; // TODO
+
+    private String COOKIE_VALUE = "/"; // TODO
+
     // 1. Redis的控制器，操作Redis
     @Bean
     public RedisManager redisManager() {
@@ -264,18 +300,31 @@ public class ShiroConfig {
     }
 
     // 2. RedisSessionDAO
+    // pdt-nms并没有配置
     @Bean
     public RedisSessionDAO redisSessionDAO(RedisManager redisManager) {
         RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
         redisSessionDAO.setRedisManager(redisManager);
+        //redisSessionDAO.setRedisManager("");
         return redisSessionDAO;
     }
 
     // 3. 会话管理器 (RedisSessionManager是指定sessionId获取方式的。自定义。)
+    // pdt-nms并没有配置
     @Bean
     public DefaultWebSessionManager redisSessionManager(RedisSessionDAO redisSessionDAO) {
         RedisSessionManager redisSessionManager = new RedisSessionManager();// 这东西是用户自定义的。本示例是一种写法，完全可以把订制过程就写在这个配置类中。
         redisSessionManager.setSessionDAO(redisSessionDAO);
+
+        // Cookie相关 begin
+        redisSessionManager.setSessionIdCookieEnabled(true);// 允许支持Cookie
+        redisSessionManager.setSessionIdUrlRewritingEnabled(true);// 允许支持请求的url重写（通过url来传递会话ID）
+        SimpleCookie cookie = new SimpleCookie();
+        cookie.setName(COOKIE_NAME);
+        cookie.setValue(COOKIE_VALUE);
+        redisSessionManager.setSessionIdCookie(cookie);
+        // Cookie相关 end
+
         return redisSessionManager;
     }
 
@@ -284,6 +333,10 @@ public class ShiroConfig {
     public RedisCacheManager redisCacheManager(RedisManager redisManager) {
         RedisCacheManager redisCacheManager = new RedisCacheManager();
         redisCacheManager.setRedisManager(redisManager);
+        // from pdt-nms
+        //redisCacheManager.setPrincipalIdFieldName("id");// REDIS_CACHE_KEY
+        // from pdt-nms
+        //redisCacheManager.setExpire(200000);
         return redisCacheManager;
     }
 

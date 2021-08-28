@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules.security.shiro.dao.mbp;
+package liuyang.testspringbootenvshiro.modules.security.shiro.service;
 
 import org.springframework.stereotype.Component;
 
@@ -24,7 +24,7 @@ public class FilterChainDefinitionMapBuilder {
         // 视频演示了一种实例工厂方法的办法。可以参考。
         filterChainDefinitionMap.put("/", "anon");
         filterChainDefinitionMap.put("/main", "authc");             // 访问/main必须登录
-        filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限
+        filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限 其他例子：perms[user:add]
         filterChainDefinitionMap.put("/admin", "roles[admin]");     // 访问/admin必须具有admin角色
         filterChainDefinitionMap.put("/**", "authc");               // 这个放在最后
 

@@ -5,6 +5,9 @@
 3. /manager 需要拥有manager角色
 4. /admin   需要拥有admin角色
 
+## 视频
+[尚学堂Shiro Spring Boot](https://www.bilibili.com/video/BV1Up4y1s7MW?p=9)
+
 ## 
 ```shell
 Quick setup — if you’ve done this kind of thing before

@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo;
+package liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo01;
 
 import lombok.Data;
 
