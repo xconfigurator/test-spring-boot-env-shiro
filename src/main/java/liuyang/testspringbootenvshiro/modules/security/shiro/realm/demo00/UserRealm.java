@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules.security.shiro.realm;
+package liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo00;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.*;

@@ -5,6 +5,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -36,39 +37,51 @@ public class LoginController {
         // AuthenticationToken
         UsernamePasswordToken token = new UsernamePasswordToken(username, password);// password字段
 
+        //
         try {
             subject.login(token);
+            log.info("login passed!");
             mav.setViewName("index"); // 登录成功 回到首页
+            return mav;
         } catch (UnknownAccountException e) {// 用户名错误
             String errorInfo = "用户 " + token.getPrincipal() + " 不存在";
             log.error(errorInfo);
+            log.error(e.getMessage(), e);
             mav.addObject("username_has_error", true);
             mav.addObject("username_error_info", errorInfo);
             mav.setViewName("login");
+            return mav;
         } catch (IncorrectCredentialsException e) { // 密码错误
             String errorInfo = "用户" + token.getPrincipal() + "密码错误";
             log.error(errorInfo);
-            mav.addObject("password_has_error", true);
-            mav.addObject("password_error_info", errorInfo);
-            mav.setViewName("login");
-        } catch (LockedAccountException e) {
-            String errorInfo = "用户" + token.getPrincipal() + "已被锁定";
-            log.error(errorInfo);
-            mav.addObject("password_has_error", true);
-            mav.addObject("password_error_info", errorInfo);
-            mav.setViewName("login");
-        } catch (AuthenticationException e) {
-            String errorInfo = "认证异常";
             log.error(e.getMessage(), e);
             mav.addObject("password_has_error", true);
             mav.addObject("password_error_info", errorInfo);
             mav.setViewName("login");
+            return mav;
+        } catch (LockedAccountException e) {
+            String errorInfo = "用户" + token.getPrincipal() + "已被锁定";
+            log.error(errorInfo);
+            log.error(e.getMessage(), e);
+            mav.addObject("password_has_error", true);
+            mav.addObject("password_error_info", errorInfo);
+            mav.setViewName("login");
+            return mav;
+        } catch (AuthenticationException e) {
+            String errorInfo = "认证异常";
+            log.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
+            mav.addObject("password_has_error", true);
+            mav.addObject("password_error_info", errorInfo);
+            mav.setViewName("login");
+            return mav;
         } catch (Exception e) {
             String errorInfo = "认证异常";
             log.error(e.getMessage(), e);
             mav.addObject("password_has_error", true);
             mav.addObject("password_error_info", errorInfo);
             mav.setViewName("login");
+            return mav;
         }
 
         /*
@@ -80,10 +93,10 @@ public class LoginController {
             AuthenticationException         认证异常
          */
 
-        return mav;
+        //return mav;
     }
 
-    @PostMapping("/logout")
+    @GetMapping("/logout")
     public ModelAndView doLogout(ModelAndView mav) {
         log.info("注销");
 

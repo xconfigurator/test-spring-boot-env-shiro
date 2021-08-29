@@ -2,10 +2,12 @@ package liuyang.testspringbootenvshiro.modules.security.shiro.config;
 
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
 import liuyang.testspringbootenvshiro.modules.security.shiro.service.FilterChainDefinitionMapBuilder;
-import liuyang.testspringbootenvshiro.modules.security.shiro.realm.UserRealm;
+import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo00.UserRealm;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo01.UserHelloRealm01;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo02.UserHelloRealm02;
 import liuyang.testspringbootenvshiro.modules.security.shiro.session.RedisSessionManager;
+import liuyang.testspringbootenvshiro.modules.security.shiro.util.EncryptConst;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.AllSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
@@ -18,7 +20,6 @@ import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
-import org.apache.shiro.spring.web.config.ShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
@@ -55,10 +56,13 @@ import java.util.List;
  * 3. Realm <-- access your security data
  */
 @Configuration
+@Slf4j
 public class ShiroConfig {
 
+    /*
     @Autowired
     FilterChainDefinitionMapBuilder filterChainDefinitionMapBuilder;
+    */
 
     /*
     在Web程序中，Shiro进行权限控制是通过一组过滤器完成的。
@@ -102,13 +106,14 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/admin", "roles[admin]");     // 访问/admin必须具有admin角色
         filterChainDefinitionMap.put("/**", "authc");               // 这个放在最后
         */
-        //shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMapBuilder.build());// URL 拦截器参考”另外的方法“
+        shiroFilterFactoryBean.setFilterChainDefinitionMap(FilterChainDefinitionMapBuilder.build());// URL 拦截器参考”另外的方法“
 
         // //////////////////////////////////////////////////////////////////////////////
         // 未认证配置 若是使用页面方式 则进行如下配置
         shiroFilterFactoryBean.setLoginUrl("/login"); // 默认会找/login.jsp
         shiroFilterFactoryBean.setUnauthorizedUrl("/401"); // 设置未授权的页面
 
+        // //////////////////////////////////////////////////////////////////////////////
         // 若使用JWT 则进行如下配置
 
 
@@ -116,13 +121,16 @@ public class ShiroConfig {
     }
 
     // 另外的方法
+    /*
     @Bean
     public DefaultShiroFilterChainDefinition defaultShiroFilterChainDefinition() {
         DefaultShiroFilterChainDefinition definition = new DefaultShiroFilterChainDefinition();
         //definition.addPathDefinition("/login", "anon");
-        definition.addPathDefinitions(filterChainDefinitionMapBuilder.build());
+        //definition.addPathDefinitions(filterChainDefinitionMapBuilder.build());//null pointer?
+        definition.addPathDefinitions(FilterChainDefinitionMapBuilder.build());
         return definition;
     }
+     */
 
     // DefaultWebSecurityManager
     // 1. 配Realm 以及 认证、授权的策略
@@ -130,11 +138,13 @@ public class ShiroConfig {
     // 3. 配会话管理
     @Bean
     public DefaultWebSecurityManager defaultWebSecurityManager(
-            @Qualifier("userRealm") UserRealm userRealm
-            , @Qualifier("iniRealm") IniRealm iniRealm
+            @Qualifier("iniRealm") IniRealm iniRealm
+            , @Qualifier("userRealm") UserRealm userRealm
+            , @Qualifier("userHelloRealm01") UserHelloRealm01 userHelloRealm01
+            , @Qualifier("userHelloRealm02") UserHelloRealm02 userHelloRealm02
             , @Qualifier("redisCacheManager") RedisCacheManager redisCacheManager
-            , @Qualifier("redisSessionManager")SessionManager redisSessionManager
-            , @Qualifier("modularRealmAuthenticator") ModularRealmAuthenticator modularRealmAuthenticator) {
+            , @Qualifier("redisSessionManager")SessionManager redisSessionManager){
+            //, @Qualifier("modularRealmAuthenticator") ModularRealmAuthenticator modularRealmAuthenticator) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
 
         // 1. 配置Realm或者Authenticator（多Realm场景）
@@ -145,12 +155,13 @@ public class ShiroConfig {
         // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator);
         // 1.2.2 多Realm 将Realm配置给SecurityManager的Realms (推荐)
         /*
+        // 位置不能搞错！ 20210829 ModularRealmAuthenticator设置需要放在设置多realm的前面。
+        defaultWebSecurityManager.setAuthenticator(new ModularRealmAuthenticator());// 使用默认认证策略 AtLeastOneSuccessfulStrategy
+        // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator); //订制策略
         List<Realm> realms = new ArrayList<>();
         realms.add(userHelloRealm);
         realms.add(userHelloRealm02);
         defaultWebSecurityManager.setRealms(realms);
-        defaultWebSecurityManager.setAuthenticator(new ModularRealmAuthenticator());// 使用默认认证策略 AtLeastOneSuccessfulStrategy
-        // defaultWebSecurityManager.setAuthenticator(modularRealmAuthenticator); //订制策略
         */
 
         // 2. 配置会话管理器
@@ -158,15 +169,17 @@ public class ShiroConfig {
         // 关闭shiro自带的web的session。详见文档
         // http://shiro.apache.org/session-management.html#SessionManagement-StatelessApplications
         // 如果不关闭，则会使用Web Session。
+        /*
         DefaultSubjectDAO subjectDAO = new DefaultSubjectDAO();
         DefaultSessionStorageEvaluator defaultSessionStorageEvaluator = new DefaultSessionStorageEvaluator();
         defaultSessionStorageEvaluator.setSessionStorageEnabled(false);
         subjectDAO.setSessionStorageEvaluator(defaultSessionStorageEvaluator);
         defaultWebSecurityManager.setSubjectDAO(subjectDAO);
+        */
 
         // 2.2 使用redisSessionManager
         // 默认情况是使用的：ServletContainerSessionManager。如果使用Redis存储session，则应做配置
-        defaultWebSecurityManager.setSessionManager(redisSessionManager);
+        //defaultWebSecurityManager.setSessionManager(redisSessionManager);
 
         // 3. 配置缓存管理器（？？不手动配置会生效么？ Redis的）
         // 默认情况缓存使用的是：？？
@@ -183,11 +196,21 @@ public class ShiroConfig {
 
     @Bean
     public IniRealm iniRealm() {
-        return new IniRealm("classpath:shiro_user.ini");
+        //return new IniRealm("classpath:shiro_user.ini");
+        IniRealm iniRealm = new IniRealm("classpath:shiro_user.ini");
+
+        // 散列规则(需要与注册（入库）时使用的加密策略保持一致。)
+        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
+        hashedCredentialsMatcher.setHashAlgorithmName(EncryptConst.DEFAULT_HASH_ALG_NAME);
+        hashedCredentialsMatcher.setHashIterations(EncryptConst.DEFAULT_ITERATIONS);
+
+        iniRealm.setCredentialsMatcher(hashedCredentialsMatcher);
+
+        return iniRealm;
     }
 
     @Bean
-    public UserHelloRealm01 userHelloRealm() {
+    public UserHelloRealm01 userHelloRealm01() {
         UserHelloRealm01 userHelloRealm01 = new UserHelloRealm01();
 
         // 散列规则
@@ -214,7 +237,7 @@ public class ShiroConfig {
 
     // 如果涉及到多个Realm认证(貌似Shiro还支持多个Realm授权)
     // Demo 推荐配置方式参见public DefaultWebSecurityManager defaultWebSecurityManager(...)
-    @Bean
+    //@Bean
     public ModularRealmAuthenticator modularRealmAuthenticator(UserHelloRealm01 userHelloRealm01, UserHelloRealm01 userHelloRealm02) {
         ModularRealmAuthenticator modularRealmAuthenticator = new ModularRealmAuthenticator();
 
@@ -226,6 +249,7 @@ public class ShiroConfig {
         // 2. 认证策略 AuthenticationStrategy
         // ModularRealmAuthenticator默认使用AtLeastOneSuccessfulStrategy
         // modularRealmAuthenticator.setAuthenticationStrategy(new AtLeastOneSuccessfulStrategy()); // default
+        //
         modularRealmAuthenticator.setAuthenticationStrategy(new AllSuccessfulStrategy());
         // modularRealmAuthenticator.setAuthenticationStrategy(new FirstSuccessfulStrategy());
 

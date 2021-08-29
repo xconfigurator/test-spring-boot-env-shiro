@@ -1,5 +1,6 @@
 package liuyang.testspringbootenvshiro.modules.hello.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,7 +12,16 @@ import org.springframework.web.servlet.ModelAndView;
  * @scine 2021/4/1
  */
 @Controller
+@Slf4j
 public class HelloController {
+
+    /*
+    @GetMapping("favicon.ico")
+    void returnNoFavicon() {
+        log.info("returnNoFavicon");
+    }
+     */
+
 
     @RequestMapping({"/"})
     public ModelAndView hello(ModelAndView  mav) {
@@ -47,10 +57,13 @@ public class HelloController {
     }
 
     // 若是单纯的页面跳转可以这样来写
+    /*
     @GetMapping("/{url}")
     public String redirect(@PathVariable("url") String url) {
+        log.info("redirect");
         return url;
     }
+     */
     // 当然也有其他的解决方案 TODO
 
 }

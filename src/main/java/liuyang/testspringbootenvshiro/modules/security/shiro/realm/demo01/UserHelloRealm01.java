@@ -77,6 +77,10 @@ public class UserHelloRealm01 extends AuthorizingRealm {
         // 盐：         https://www.bilibili.com/video/BV1YW411M7S3?p=12
         // return new SimpleAuthenticationInfo(user, user.getPassword(), getName());// 明文
         // SimpleAuthenticationInfo(Object principal, Object hashedCredentials, ByteSource credentialsSalt, String realmName)// principal“当事人”这参数很重要!是后续授权的依据。
-        return new SimpleAuthenticationInfo(user, user.getPassword(), ByteSource.Util.bytes(user.getSalt()), getName());// 密文加盐
+        return new SimpleAuthenticationInfo(
+                user,
+                user.getPassword(),
+                ByteSource.Util.bytes(user.getSalt()),
+                getName());// 密文加盐
     }
 }

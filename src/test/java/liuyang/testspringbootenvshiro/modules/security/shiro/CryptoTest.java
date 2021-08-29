@@ -16,6 +16,10 @@ import java.util.UUID;
  * 实现加密     https://www.bilibili.com/video/BV1vE411i7ij?p=16 （啰嗦）
  * 加盐        https://www.bilibili.com/video/BV1vE411i7ij?p=17 （加盐的一些讲究 用到的时候再看一遍。 公盐， 私盐。这个人逻辑比较混乱。）
  *
+ * 另参考视频（尚学堂）
+ * https://www.bilibili.com/video/BV1Up4y1s7MW?p=6
+ * https://www.bilibili.com/video/BV1Up4y1s7MW?p=10
+ *
  * 参考文档：
  * http://shiro.apache.org/cryptography.html
  *

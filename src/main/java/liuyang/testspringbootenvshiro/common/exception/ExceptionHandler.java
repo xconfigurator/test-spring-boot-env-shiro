@@ -23,6 +23,6 @@ public class ExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
     public String handleException(Exception e) {
         log.error(e.getMessage(), e);
-        return "Server ERROR";
+        return "Server ERROR (异常被ExceptionHandler处理)";
     }
 }

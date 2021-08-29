@@ -2,7 +2,10 @@ spring:
   thymeleaf:
     cache: false
   redis:
-    host: 127.0.0.1
+    #host: 127.0.0.1
+    host: 192.168.5.15
     port: 6379
+  #mvc:
+    #static-path-pattern: /resources/** #默认是/**, 无前缀。也可以改变前缀，比如/resources/**
 server:
   port: 80
