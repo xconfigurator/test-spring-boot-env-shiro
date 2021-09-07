@@ -100,13 +100,20 @@
         </dependency>
 -->
 
-        <!-- Ehcache -->
-        <!-- JVM中缓存，速度快，效率高；但在分布式应用中使用不方便。 -->
-        <!-- https://mvnrepository.com/artifact/org.ehcache/ehcache -->
+        <!-- Shiro-Ehcache -->
         <dependency>
-            <groupId>org.ehcache</groupId>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-ehcache</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+
+        <!-- Ehcache -->
+        <!-- 2.x https://mvnrepository.com/artifact/net.sf.ehcache/ehcache -->
+        <!-- JVM中缓存，速度快，效率高；但在分布式应用中使用不方便。Shiro集成的还是2.x 2.8.x阿里镜像还没有同步-->
+        <dependency>
+            <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>
-            <version>3.9.6</version>
+            <version>2.10.6</version>
         </dependency>
 
         <dependency>

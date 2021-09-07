@@ -1,0 +1,29 @@
+<ehcache>
+    <!-- 修改示例中的默认缓存设置为JVM的临时路径，这个依具体情况而定 -->
+    <diskStore path="/var/ehcache/"/>
+
+    <!-- 保留示例文件中的默认缓存设置 -->
+    <defaultCache
+            maxElementsInMemory="10000"
+            eternal="false"
+            timeToIdleSeconds="120"
+            timeToLiveSeconds="120"
+            overflowToDisk="true"
+    />
+
+    <cache name="sampleCache1"
+           maxElementsInMemory="10000"
+           eternal="false"
+           timeToIdleSeconds="300"
+           timeToLiveSeconds="600"
+           overflowToDisk="true"
+    />
+
+    <cache name="sampleCache2"
+           maxElementsInMemory="10000"
+           eternal="false"
+           timeToIdleSeconds="300"
+           timeToLiveSeconds="600"
+           overflowToDisk="true"
+    />
+</ehcache>

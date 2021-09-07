@@ -8,9 +8,12 @@ import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo02.UserHe
 import liuyang.testspringbootenvshiro.modules.security.shiro.session.RedisSessionManager;
 import liuyang.testspringbootenvshiro.modules.security.shiro.util.EncryptConst;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.ehcache.CacheManager;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.AllSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
+import org.apache.shiro.cache.ehcache.EhCacheManager;
+import org.apache.shiro.io.ResourceUtils;
 import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
 import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.realm.Realm;
@@ -32,7 +35,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -135,7 +141,7 @@ public class ShiroConfig {
      */
 
     // DefaultWebSecurityManager
-    // 1. 配Realm 以及 认证、授权的策略
+    // 1. 配Realm 以及 多Realm情况下的认证、授权的策略
     // 2. 配缓存
     // 3. 配会话管理
     @Bean
@@ -144,11 +150,13 @@ public class ShiroConfig {
             , @Qualifier("userRealm") UserRealm userRealm
             , @Qualifier("userHelloRealm01") UserHelloRealm01 userHelloRealm01
             , @Qualifier("userHelloRealm02") UserHelloRealm02 userHelloRealm02
+            //, @Qualifier("modularRealmAuthenticator") ModularRealmAuthenticator modularRealmAuthenticator
             , @Qualifier("redisCacheManager") RedisCacheManager redisCacheManager
-            , @Qualifier("redisSessionManager")SessionManager redisSessionManager){
-            //, @Qualifier("modularRealmAuthenticator") ModularRealmAuthenticator modularRealmAuthenticator) {
+            , @Qualifier("redisSessionManager")SessionManager redisSessionManager
+            , @Qualifier("ehCacheManager") EhCacheManager ehCacheManager) {
         DefaultWebSecurityManager defaultWebSecurityManager = new DefaultWebSecurityManager();
 
+        // //////////////////////////////////////////////////////////////
         // 1. 配置Realm或者Authenticator（多Realm场景）
         // 1.1 单Realm
         // defaultWebSecurityManager.setRealm(userRealm);
@@ -166,6 +174,8 @@ public class ShiroConfig {
         defaultWebSecurityManager.setRealms(realms);
         */
 
+
+        // //////////////////////////////////////////////////////////////
         // 2. 配置会话管理器
         // 2.1 关闭默认缓存
         // 关闭shiro自带的web的session。详见文档
@@ -183,9 +193,18 @@ public class ShiroConfig {
         // 默认情况是使用的：ServletContainerSessionManager。如果使用Redis存储session，则应做配置
         //defaultWebSecurityManager.setSessionManager(redisSessionManager);
 
+
+        // //////////////////////////////////////////////////////////////
         // 3. 配置缓存管理器（？？不手动配置会生效么？ Redis的）
+        // 缓存管理器配上就生效，不需要改变Realm中授权部分的写法，所以放心地在Realm授权部分查数据库。问题：认证是否也缓存？
         // 默认情况缓存使用的是：？？
-        defaultWebSecurityManager.setCacheManager(redisCacheManager);
+        //defaultWebSecurityManager.setCacheManager(redisCacheManager);
+        defaultWebSecurityManager.setCacheManager(ehCacheManager);
+
+
+        // //////////////////////////////////////////////////////////////
+        // 4. 其他功能，如rememberMe
+
 
         return defaultWebSecurityManager;
     }
@@ -231,8 +250,7 @@ public class ShiroConfig {
     public UserHelloRealm02 userHelloRealm02() {
         UserHelloRealm02 userHelloRealm02 = new UserHelloRealm02();
 
-        // 散列规则 TODO
-
+        // TODO 散列规则
 
         return userHelloRealm02;
     }
@@ -291,6 +309,55 @@ public class ShiroConfig {
         AuthorizationAttributeSourceAdvisor advisor = new AuthorizationAttributeSourceAdvisor();
         advisor.setSecurityManager(defaultWebSecurityManager);
         return advisor;
+    }
+
+    // //////////////////////////////////////////////////////////////////////////
+    // Ehcache 20210907 add
+    // 视频：Shiro整合Ehcache https://www.bilibili.com/video/BV1Up4y1s7MW?p=22&spm_id_from=pageDriver
+    // 前置条件：需要先在pom.xml中引入这个ehcache 依赖 shiro-ehcache 依赖
+    // 注意：如果在容器中注入了本Bean，则需要取消RedisCacheManager的注入, 或者使用@Primary，否则：
+    /*
+    ***************************
+    APPLICATION FAILED TO START
+    ***************************
+
+    Description:
+
+    Field cacheManager in org.apache.shiro.spring.config.AbstractShiroConfiguration required a single bean, but 2 were found:
+        - ehCacheManager: defined by method 'ehCacheManager' in class path resource [liuyang/testspringbootenvshiro/modules/security/shiro/config/ShiroConfig.class]
+        - redisCacheManager: defined by method 'redisCacheManager' in class path resource [liuyang/testspringbootenvshiro/modules/security/shiro/config/ShiroConfig.class]
+
+    Action:
+
+    Consider marking one of the beans as @Primary, updating the consumer to accept multiple beans, or using @Qualifier to identify the bean that should be consumed
+    */
+    @Primary // 又解锁Spring Framework的一个新功能
+    @Bean
+    public EhCacheManager ehCacheManager() {
+        // 注意：这个EhCacheManager是在shrio-ehcache依赖中
+        EhCacheManager ehCacheManager = null;
+        InputStream inputStreamForPath = null;
+        try {
+            ehCacheManager = new EhCacheManager();
+            // 注意：这个ResourceUtils是Shiro的工具类，而不是Spring的工具类
+            inputStreamForPath = ResourceUtils.getInputStreamForPath("classpath:ehcache.xml");
+            // 注意：这个CacheManager是Ehcache的。net.sf.ehcache.CacheManager
+            CacheManager cacheManager = new CacheManager(inputStreamForPath);
+            ehCacheManager.setCacheManager(cacheManager);
+            return ehCacheManager;
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            return null;
+        } finally {
+            if (inputStreamForPath != null) {
+                try {
+                    inputStreamForPath.close();
+                } catch (IOException e) {
+                    log.error("读ehcache.xml的输入流未成功释放！");
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
     }
 
     // //////////////////////////////////////////////////////////////////////////
