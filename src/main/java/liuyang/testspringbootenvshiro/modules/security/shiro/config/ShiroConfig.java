@@ -177,6 +177,9 @@ public class ShiroConfig {
 
         // //////////////////////////////////////////////////////////////
         // 2. 配置会话管理器
+        // 说明：配置即生效，session操作，之前怎么用还怎么用。
+        //      配置上Shiro之后，Shiro就会使用session管理器代理Tomcat（容器）管理的session等对象（通过Filter）
+        //      视频说明：https://www.bilibili.com/video/BV1Up4y1s7MW?p=25
         // 2.1 关闭默认缓存
         // 关闭shiro自带的web的session。详见文档
         // http://shiro.apache.org/session-management.html#SessionManagement-StatelessApplications

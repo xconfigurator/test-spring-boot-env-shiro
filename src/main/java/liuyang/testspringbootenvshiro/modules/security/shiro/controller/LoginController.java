@@ -34,7 +34,7 @@ public class LoginController {
         }
         // 20210508 add end
 
-        // AuthenticationToken
+        // AuthenticationTokenl
         UsernamePasswordToken token = new UsernamePasswordToken(username, password);// password字段
 
         //

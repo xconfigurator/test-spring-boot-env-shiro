@@ -5,8 +5,22 @@
 3. /manager 需要拥有manager角色
 4. /admin   需要拥有admin角色
 
+密码 123
+
 ## 视频
-[尚学堂Shiro Spring Boot](https://www.bilibili.com/video/BV1Up4y1s7MW?p=9)
+1. Shiro
+>全流程  
+[尚学堂Shiro Spring Boot](https://www.bilibili.com/video/BV1Up4y1s7MW?p=9)  
+
+>全流程（快速）  
+[黑马Shiro Spring Boot](https://www.bilibili.com/video/BV1ct411x7CN?from=search&seid=3865477371083013255)
+
+2. + Redis
+TODO
+    
+3. + JWT
+TODO
+     
 
 ## 
 ```shell
