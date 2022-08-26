@@ -1,16 +1,35 @@
 package liuyang.testspringbootenvshiro.modules.security.shiro.service;
 
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * 实例工厂的方法 返回filterChainDefinitionMap
  * @author liuyang
  * @scine 2021/5/10
  * @Update 2021/8/28
+ *         2022/8/12 根据YouTube视频 Apache shiro项目发起人视频更新笔记
+ *
+ * Authroization:
+ * Process of determing Access Control "who can do what"
+ * Elements of Authorization:
+ * 1. Permissions
+ * 2. Roles
+ * 3. Users
+ *
+ * Permissions:
+ * The "what" of an application
+ * Most atomic security element
+ * Describes resource types and their behavior
+ * Does not define "who"
+ *
+ * Roles:
+ * Implicity or Explicity construct
+ * Implicit: Name only
+ * Explicit: A named collection of Permissions
+ *  Allows behavior aggregation
+ *  Enables dynamic(runtime) alteration of user abilities.
+ *
+ *
  */
 //@Component// Bean注入有问题啊！！
 public class FilterChainDefinitionMapBuilder {

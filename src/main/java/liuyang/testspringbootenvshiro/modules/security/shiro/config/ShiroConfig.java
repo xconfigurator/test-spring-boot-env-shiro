@@ -61,6 +61,13 @@ import java.util.List;
  * 1. Subject <-- the current 'user'
  * 2. SecurityManger <-- manages all Subjects
  * 3. Realm <-- access your security data
+ *
+ *  update 20220817
+ *  How to Authenticate with Shiro
+ *  1. Collect principals & credentials
+ *  2. Submit to Authentication System
+ *  3. Allow, retry, or block access
+ *
  */
 @ConditionalOnProperty(prefix = "liuyang", name = "security.shiro.enabled", havingValue = "true")
 @Configuration
