@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules;
+package liuyang.testspringbootenvshiro.modules.web.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
