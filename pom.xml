@@ -39,7 +39,7 @@
 
         <!-- Shiro -->
         <!-- https://shiro.apache.org/spring-boot.html -->
-        <!-- 视频：https://www.bilibili.com/video/BV1ct411x7CN?p=5&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4 -->
+        <!-- 20220903补充视频：https://www.bilibili.com/video/BV1ct411x7CN?p=5&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4 -->
         <!--
            Subject              （the current 'user'）用户
            SecurityMannager     (manages all Subjects)管理所有用户
@@ -59,6 +59,7 @@
         -->
 
         <!-- Shiro Thymeleaf -->
+        <!-- 20220904补充视频：https://www.bilibili.com/video/BV1ct411x7CN?p=13&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4 -->
         <!-- 貌似不算是官方的 还是算了吧 要想结合标签 还是用Spring Security吧 视频参考狂P8-->
         <!-- https://mvnrepository.com/artifact/com.github.theborakompanioni/thymeleaf-extras-shiro -->
         <!-- 2016年的东西了， 貌似也没人再更新。所以要用thymeleaf还是选Spring Security吧。 -->

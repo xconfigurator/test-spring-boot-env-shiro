@@ -13,25 +13,28 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 @Slf4j
 public class RouterController {
-
-    @GetMapping("/admin")
-    public String admin() {
-        return "admin";
-    }
-
-    @GetMapping("index")
-    public String index() {
-        return "index";
-    }
-
+    // /////////////////////////////////////////////////////////////////
+    // ShiroConfig中的shiroFilterFactoryBean使用的跳转路径
     @GetMapping("/login")
     public String login() {
         return "login";
     }
 
+    @GetMapping("/401")
+    public String unauthorized() {
+        return "error/401";
+    }
+
+    // /////////////////////////////////////////////////////////////////
+    // 功能页面
     @GetMapping("/main")
     public String main() {
         return "main";
+    }
+
+    @GetMapping("/admin")
+    public String admin() {
+        return "admin";
     }
 
     @GetMapping("/manager")
@@ -39,17 +42,18 @@ public class RouterController {
         return "manager";
     }
 
-    @GetMapping("/401")
-    public String unauthorization() {
-        return "error/401";
-    }
-
-    ////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////
+    // 看看基本功能好不好使
     @RequestMapping({"/"})
     public ModelAndView hello(ModelAndView  mav) {
         mav.addObject("msg", "hello, Shiro");
         mav.setViewName("index");
         return mav;
+    }
+
+    @GetMapping("index")
+    public String index() {
+        return "index";
     }
 
     @GetMapping("/exception")

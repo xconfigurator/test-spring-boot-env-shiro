@@ -54,6 +54,8 @@ public class FilterChainDefinitionMapBuilder {
         filterChainDefinitionMap.put("/", "anon");
         filterChainDefinitionMap.put("/favicon.ico", "anon");
         filterChainDefinitionMap.put("/static/*", "anon");
+        // 问题 20220904 为啥没有放行/login也能执行登录？
+        filterChainDefinitionMap.put("/login", "anon");             // 20220904 实测，貌似写不写这个/login都可以访问/login
         filterChainDefinitionMap.put("/main", "authc");             // 访问/main必须登录
         filterChainDefinitionMap.put("/manager", "perms[managerxxx]"); // 访问/manager必须具有manager权限 其他例子：perms[user:add]
         filterChainDefinitionMap.put("/admin", "roles[admin]");     // 访问/admin必须具有admin角色

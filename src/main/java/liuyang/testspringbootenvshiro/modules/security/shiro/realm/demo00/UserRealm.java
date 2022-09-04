@@ -13,9 +13,15 @@ import java.util.Set;
 /**
  * @author liuyang
  * @scine 2021/4/1
- *
+ *        2022/9/4 更新笔记
  * 注：
  * Realm <-- access your security data
+ *
+ * 名词解释：
+ * Subject:     Security-specific user "view"
+ * Principals:  Subject's identifying attributes
+ * Credentials: Secret values that verify identity
+ * Realm:       Security-specific DAO
  */
 @Slf4j
 public class UserRealm extends AuthorizingRealm {
@@ -32,6 +38,7 @@ public class UserRealm extends AuthorizingRealm {
         // 3. 查询用户的角色和权限(from principals)
         // 4. 构造返回值 (SimpleAuthorizationInfo)
 
+        // ///////////////////////////////////////////////////////////////////////////
         // 1. 获取登录相关信息（从认证方法保存的安全数据中获取）
         // Type1:
         // Account account = (Account) principals.getPrimaryPrincipal(); // 需要认证方法中return new SimpleAuthenticationInfo(user, user.getPwd(), "");第一个参数的配合。
@@ -41,16 +48,20 @@ public class UserRealm extends AuthorizingRealm {
         // Type3:下面这样干还需要再次去查数据库，不要这样！
         // String username = (String) principals.getPrimaryPrincipal();// 需要认证方法中return new SimpleAuthenticationInfo(username, user.getPwd(), "");第一个参数的配合。
 
+        // ////////////////////////////////////////////////////////////////////////////
         // 2. 根据id或者名称去查询用户(from principals)
         // 3. 查询用户的角色和权限(from principals)
+        // 注：20220904 update 应该是在这里根据id去查询数据源（数据库）中记录的
+        //      数据缓存的动作是在dao层做的，不在这里体现。
+        // 结论：从数据源中查roles和perms的集合
 
-        // 4. 构造返回值 (SimpleAuthorizationInfo)
+        // ////////////////////////////////////////////////////////////////////////////
+        // 4. 构造返回值 (SimpleAuthorizationInfo) 设置该用户的角色和权限。
         SimpleAuthorizationInfo simpleAuthorizationInfo = new SimpleAuthorizationInfo();
         // 设置角色
         Set<String> roles = new HashSet<>();
         // roles.add(account.getRole());
         simpleAuthorizationInfo.addRoles(roles);
-
         /// 设置权限
         Set<String> permisions= new HashSet<>();
         // permisions.add(account.getPerms());
@@ -115,6 +126,8 @@ public class UserRealm extends AuthorizingRealm {
         // 当然也可以配置使用密码
          */
 
+        // 关于实际应用中密码是密文的实际问题。
+        // 注：20220904 密码是密文的参考demo01.UserHelloRealm01
 
         return null; // return null 在Controller中调用subject.login(token);就会抛出异常。
     }

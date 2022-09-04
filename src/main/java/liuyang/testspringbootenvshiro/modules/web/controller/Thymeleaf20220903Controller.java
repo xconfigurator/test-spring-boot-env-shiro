@@ -6,6 +6,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
+ * 这个Controller主要是根据下面这个视频
+ * https://www.bilibili.com/video/BV1ct411x7CN?p=4&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+ * 黑马的一个2小时课程 在Spring Boot环境中使用Apache Shiro
+ *
  * @author xconf
  * @since 2022/9/3
  */

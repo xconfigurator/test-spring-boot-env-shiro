@@ -15,20 +15,23 @@ import java.util.Set;
  *
  * @author liuyang
  * @scine 2021/4/8
+ *        2022/9/4 更正
  */
 @Slf4j
 public class UserHelloRealm01 extends AuthorizingRealm {
 
     // 授权（告诉Shrio如何使用"当事人 - 从有道词典的简明词典中查询"“Principals”）
     // Realm实现(时间)：https://www.bilibili.com/video/BV1YW411M7S3?p=19
+    // 视频2：https://www.bilibili.com/video/BV1ct411x7CN?p=12&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
         log.info("执行了授权 doGetAuthorizationInfo(PrincipalCollection principals)");
         // 第三个人::黑马
         // 1. 获取登录相关信息（从认证方法保存的安全数据中获取）n
-        User user = (User) principals.getPrimaryPrincipal();// 在多Realm时，拿到的principal是根ShiroConfig.java中配置的Realm顺序有关的。
+        User token = (User) principals.getPrimaryPrincipal();// 在多Realm时，拿到的principal是根ShiroConfig.java中配置的Realm顺序有关的。
         //Object principal = SecurityUtils.getSubject().getPrincipal();// 这样也可以拿到 第四个人::黑马。liuyang:也可以从这个principal中拿到用户标识如ID等再查相关权限表。这个应该是属于系统策略问题了。
         // 2. 根据id或者名称去查询用户(from principals)
+        User user = null;// from DB e.g. service.findByUsername(token.getUsername());
         // 3. 查询用户的角色和权限(from principals)
         Set<String> permissions = user.getPermissions();
         Set<String> roles = user.getRoles();

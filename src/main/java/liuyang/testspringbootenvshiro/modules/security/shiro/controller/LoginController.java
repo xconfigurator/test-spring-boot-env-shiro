@@ -86,7 +86,7 @@ public class LoginController {
             return mav;
         } catch (AuthenticationException e) {
             String errorInfo = "认证异常";
-            log.error(e.getMessage(), e);
+            log.error(errorInfo);
             log.error(e.getMessage(), e);
             mav.addObject("password_has_error", true);
             mav.addObject("password_error_info", errorInfo);
@@ -94,6 +94,7 @@ public class LoginController {
             return mav;
         } catch (Exception e) {
             String errorInfo = "认证异常";
+            log.error(errorInfo);
             log.error(e.getMessage(), e);
             mav.addObject("password_has_error", true);
             mav.addObject("password_error_info", errorInfo);
