@@ -1,7 +1,6 @@
 package liuyang.testspringbootenvshiro.modules.security.shiro.config;
 
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
-import liuyang.testspringbootenvshiro.modules.security.shiro.service.FilterChainDefinitionMapBuilder;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo00.UserRealm;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo01.UserHelloRealm01;
 import liuyang.testspringbootenvshiro.modules.security.shiro.realm.demo02.UserHelloRealm02;
@@ -14,27 +13,25 @@ import org.apache.shiro.authc.pam.AllSuccessfulStrategy;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.apache.shiro.io.ResourceUtils;
-import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
-import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.realm.Realm;
 import org.apache.shiro.realm.text.IniRealm;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.spring.web.config.DefaultShiroFilterChainDefinition;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 
 import java.io.IOException;
@@ -45,6 +42,9 @@ import java.util.List;
 /**
  * @author liuyang
  * @scine 2021/4/1
+ *
+ * 参考视频：
+ * https://www.bilibili.com/video/BV1ct411x7CN?p=5&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
  *
  * 注册三大件：
  * 1. Realm
@@ -79,10 +79,11 @@ public class ShiroConfig {
     FilterChainDefinitionMapBuilder filterChainDefinitionMapBuilder;
     */
 
+    // ////////////////////////////////////////////////////////////////////////////////////////
+    // ShiroFilterFactoryBean
     /*
     在Web程序中，Shiro进行权限控制是通过一组过滤器完成的。
      */
-    // ShiroFilterFactoryBean
     @Bean
     public ShiroFilterFactoryBean getShiroFilterFactoryBean(@Qualifier("defaultWebSecurityManager") DefaultWebSecurityManager defaultWebSecurityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
@@ -147,7 +148,8 @@ public class ShiroConfig {
     }
      */
 
-    // DefaultWebSecurityManager
+    // ////////////////////////////////////////////////////////////////////////////////////////
+    // SecurityManager - DefaultWebSecurityManager
     // 1. 配Realm 以及 多Realm情况下的认证、授权的策略
     // 2. 配缓存
     // 3. 配会话管理
@@ -219,12 +221,10 @@ public class ShiroConfig {
         return defaultWebSecurityManager;
     }
 
-    // 创建 Realm 对象
-    @Bean
-    public UserRealm userRealm() {
-        return new UserRealm();
-    }
 
+    // ////////////////////////////////////////////////////////////////////////////////////////
+    // Realm
+    // 创建 Realm 对象
     @Bean
     public IniRealm iniRealm() {
         //return new IniRealm("classpath:shiro_user.ini");
@@ -238,6 +238,11 @@ public class ShiroConfig {
         iniRealm.setCredentialsMatcher(hashedCredentialsMatcher);
 
         return iniRealm;
+    }
+
+    @Bean
+    public UserRealm userRealm() {
+        return new UserRealm();
     }
 
     @Bean
@@ -288,18 +293,9 @@ public class ShiroConfig {
     }
 
     // //////////////////////////////////////////////////////////////////////////
-    // 整合thymeleaf-extras-shiro
-    // 使用方法参考：https://blog.csdn.net/q15102780705/article/details/107445247
-    @Bean
-    public ShiroDialect getShiroDialect() {
-        return new ShiroDialect();
-    }
-
-    // //////////////////////////////////////////////////////////////////////////
     // 配置支持shiro注解
     // pdt中配了这个，但是renren-security中没有
     // 不过好像这个默认值就是true。？？在IntelliJ IDEA中如何查看某一个类的属性的默认值？或者说运行时的值？
-    /*
     @Bean
     @DependsOn("lifecycleBeanPostProcessor")
     public DefaultAdvisorAutoProxyCreator defaultAdvisorAutoProxyCreator() {
@@ -307,7 +303,6 @@ public class ShiroConfig {
         defaultAdvisorAutoProxyCreator.setProxyTargetClass(true);
         return defaultAdvisorAutoProxyCreator;
     }
-     */
 
     @Bean("lifecycleBeanPostProcessor")
     public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
@@ -322,7 +317,7 @@ public class ShiroConfig {
     }
 
     // //////////////////////////////////////////////////////////////////////////
-    // Ehcache 20210907 add
+    // Ehcache 20210907 add (我嘞个去，再看到已经是一年前了。202209040028)
     // 视频：Shiro整合Ehcache https://www.bilibili.com/video/BV1Up4y1s7MW?p=22&spm_id_from=pageDriver
     // 前置条件：需要先在pom.xml中引入这个ehcache 依赖 shiro-ehcache 依赖
     // 注意：如果在容器中注入了本Bean，则需要取消RedisCacheManager的注入, 或者使用@Primary，否则：
@@ -370,8 +365,10 @@ public class ShiroConfig {
         }
     }
 
-    // //////////////////////////////////////////////////////////////////////////
-    // Redis
+    // ////////////////////////////////////////////////////////////////////////////////////////
+    // CacheManager         org.apache.shiro.cache.CacheManager
+    // WebSessionManager    org.apache.shiro.web.session.mgt.WebSessionManager
+    //  Redis
     // 注意1: 除此之外需要先指定sesssionId的获取方式，参见RedisSessionManager)
     // 注意2；在Redis接管session之后，获取session的方法变为subject.getSession().
     // 1. Redis的控制器，操作Redis
@@ -443,4 +440,12 @@ public class ShiroConfig {
         return redisCacheManager;
     }
 
+
+    // ////////////////////////////////////////////////////////////////////////////////////////
+    // 整合thymeleaf-extras-shiro
+    // 使用方法参考：https://blog.csdn.net/q15102780705/article/details/107445247
+    @Bean
+    public ShiroDialect getShiroDialect() {
+        return new ShiroDialect();
+    }
 }

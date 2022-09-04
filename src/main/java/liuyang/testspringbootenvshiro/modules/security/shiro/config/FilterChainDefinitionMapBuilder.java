@@ -1,4 +1,4 @@
-package liuyang.testspringbootenvshiro.modules.security.shiro.service;
+package liuyang.testspringbootenvshiro.modules.security.shiro.config;
 
 import java.util.LinkedHashMap;
 

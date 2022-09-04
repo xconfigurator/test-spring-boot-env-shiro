@@ -39,6 +39,11 @@ public class RouterController {
         return "manager";
     }
 
+    @GetMapping("/401")
+    public String unauthorization() {
+        return "error/401";
+    }
+
     ////////////////////////////////////////////////
     @RequestMapping({"/"})
     public ModelAndView hello(ModelAndView  mav) {
