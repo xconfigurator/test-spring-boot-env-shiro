@@ -411,6 +411,7 @@ public class ShiroConfig {
     // 说明：
     // Controller中的request，在shiro过滤器中的doFilterInternal方法，被包装秤ShiroHttpServletRequest
     // SecurityManager和SessionManager决定session来源于ServletRequest还是由Shiro管理的会话。
+    // 无论是通过request.getSession或者subject。getSession获取到的session，操作session，两者等价。
 
     // 2. RedisSessionDAO
     // pdt-nms并没有配置
