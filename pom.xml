@@ -104,6 +104,10 @@
 -->
 
         <!-- Shiro-Ehcache -->
+        <!--
+        Shiro整合EhCache
+        https://www.bilibili.com/video/BV11e4y1n7BH?p=26&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+        -->
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-ehcache</artifactId>

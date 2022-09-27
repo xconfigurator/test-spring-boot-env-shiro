@@ -399,6 +399,19 @@ public class ShiroConfig {
         return redisManager;
     }
 
+    // 关于Shiro Session的视频
+    // https://www.bilibili.com/video/BV11e4y1n7BH?p=27&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+    // 分类：
+    // DefaultSessionManager: 用于Java SE环境
+    // ServletContainerSessionManager: 用于web环境，直接使用Servlet容器的会话
+    // DefaultWebSessionManager: 用于web环境，自己维护会话(不适用Servlet容器的会话管理)
+    // 使用：
+    // Session session = SecurityUtils.getSubject().getSession();
+    // session.setAttribute("key", "value");
+    // 说明：
+    // Controller中的request，在shiro过滤器中的doFilterInternal方法，被包装秤ShiroHttpServletRequest
+    // SecurityManager和SessionManager决定session来源于ServletRequest还是由Shiro管理的会话。
+
     // 2. RedisSessionDAO
     // pdt-nms并没有配置
     @Bean

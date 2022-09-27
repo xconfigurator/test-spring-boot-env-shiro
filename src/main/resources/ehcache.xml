@@ -1,6 +1,24 @@
 <ehcache>
+    <!-- https://www.ehcache.org/generated/2.10.4/html/ehc-all/#page/Ehcache_Documentation_Set%2Fre-ehcache_reference_documentation.html%23 -->
+    <!-- https://www.ehcache.org/ehcache.xml -->
+    <!-- https://www.ehcache.org/generated/2.10.4/html/ehc-all/#page/Ehcache_Documentation_Set%2Fto-title_ehcache_configuration_guide.html%23 -->
+    <!-- https://www.ehcache.org/documentation/2.10.4/pdf/index.html -->
+    <!--
+    EhCache参考视频：
+    EhCache API使用
+    https://www.bilibili.com/video/BV11e4y1n7BH?p=25&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+    Shiro整合EhCache
+    https://www.bilibili.com/video/BV11e4y1n7BH?p=26&spm_id_from=pageDriver&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+    MyBatis整合EhCache
+    https://www.bilibili.com/video/BV1VP4y1c7j7?p=61&vd_source=8bd7b24b38e3e12c558d839b352b32f4
+    -->
+
     <!-- 修改示例中的默认缓存设置为JVM的临时路径，这个依具体情况而定 -->
     <diskStore path="/var/ehcache/"/>
+    <!-- 另一种可选写法 -->
+    <!--
+    <diskStore path="java.io.tmpdir/ehcache"/>
+    -->
 
     <!-- 保留示例文件中的默认缓存设置 -->
     <defaultCache
